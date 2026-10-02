@@ -70,7 +70,7 @@ async function renderToday() {
 
 (window as any).markIntake = async function (intakeId: string, action: string) {
   const today = todayStr();
-  const allRecs = (await (db as any).all("records")).filter((r: any) => r.day === today);
+  const allRecs = (await db.getAllRecords()).filter((r: any) => r.day === today);
   let rec = allRecs.find((r: any) => r.intakeId === intakeId);
   if (rec) {
     rec.status = action;
@@ -182,8 +182,9 @@ function renderTimePickers(n: number) {
 
 // --- Detail ---
 async function renderDetail(courseId: string) {
-  const course = await (db as any).get("courses", courseId);
+  const course = await db.getById<Course>("courses", courseId);
   if (!course) { document.getElementById("detail-content")!.innerHTML = `<p class="text-muted">${t("no-data")}</p>`; return; }
+  const courseC = course as Course;
   
   const intakes = (await db.getCourseIntakes(courseId)).sort((a: Intake, b: Intake) => a.sortOrder - b.sortOrder);
   const allRecs = (await Promise.all(intakes.map(i => db.getIntakeRecords(i.id)))).flat();
@@ -222,7 +223,7 @@ async function renderDetail(courseId: string) {
 }
 
 (window as any).togglePause = async function (id: string) {
-  const course = await (db as any).get("courses", id);
+  const course = await db.getById<Course>("courses", id);
   if (!course) return;
   course.status = course.status === "paused" ? "active" : "paused";
   await db.saveCourse(course);
