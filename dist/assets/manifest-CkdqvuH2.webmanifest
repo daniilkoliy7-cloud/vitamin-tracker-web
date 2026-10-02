@@ -1,0 +1,14 @@
+{
+  "name": "Vitamin Tracker",
+  "short_name": "Vitamins",
+  "description": "Трекер курсов витаминов и лекарств",
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["window-controls", "minimal-ui"],
+  "background_color": "#f7f9fa",
+  "theme_color": "#34C759",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%2334C759'/><text x='50' y='58' text-anchor='middle' fill='white' font-size='40'>V</text></svg>", "sizes": "100x100", "type": "image/svg+xml" }
+  ]
+}
