@@ -45,7 +45,7 @@ async function renderToday() {
     
     for (const intake of intakes) {
       const rec = records.find(r => r.intakeId === intake.id);
-      const status = rec?.status || "pending";
+      const status: IntakeRecord["status"] = rec?.status ?? "pending";
       const timeStr = intakeTime(intake);
       
       html += `<div class="row mt-2">`;
@@ -68,14 +68,14 @@ async function renderToday() {
   }
 }
 
-(window as any).markIntake = async function (intakeId: string, action: string) {
+(window as any).markIntake = async function (intakeId: string, action: IntakeRecord["status"]) {
   const today = todayStr();
   const allRecs = (await db.getAllRecords()).filter((r: any) => r.day === today);
   let rec = allRecs.find((r: any) => r.intakeId === intakeId);
   if (rec) {
     rec.status = action;
     rec.markedAt = new Date().toISOString();
-    await db.saveRecord(rec);
+    if (!await db.saveRecord(rec)) { toast("❌ Не удалось сохранить отметку"); return; }
     toast(action === "taken" ? "✅" : "⏭");
     renderToday();
   }
@@ -164,16 +164,25 @@ function renderTimePickers(n: number) {
     status: "active",
   };
   
-  await db.saveCourse(course);
+  if (!await db.saveCourse(course)) {
+    toast("❌ Не удалось сохранить курс");
+    return;
+  }
   
+  let intakesSaved = true;
   for (let i = 0; i < hours.length && i < 6; i++) {
-    await db.saveIntake({
+    const ok = await db.saveIntake({
       id: uid(),
       courseId,
       hour: Math.min(23, Math.max(0, hours[i])),
       minute: Math.min(59, Math.max(0, mins[i])),
       sortOrder: i,
     });
+    if (!ok) intakesSaved = false;
+  }
+  if (!intakesSaved) {
+    toast("❌ Курс сохранён, но время приёма не записалось");
+    return;
   }
   
   toast("✅ Курс создан");
@@ -226,14 +235,14 @@ async function renderDetail(courseId: string) {
   const course = await db.getById<Course>("courses", id);
   if (!course) return;
   course.status = course.status === "paused" ? "active" : "paused";
-  await db.saveCourse(course);
+  if (!await db.saveCourse(course)) { toast("❌ Не удалось сохранить изменения"); return; }
   toast(course.status === "paused" ? "⏸" : "▶️");
   renderDetail(id);
 };
 
 (window as any).confirmDelete = async function (id: string) {
   if (confirm(t("confirm-delete"))) {
-    await db.deleteCourse(id);
+    if (!await db.deleteCourse(id)) { toast("❌ Не удалось удалить курс"); return; }
     toast("🗑");
     (window as any).navigate("courses");
   }
